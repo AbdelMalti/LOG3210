@@ -1,0 +1,191 @@
+PARSER_BEGIN(Exercice1)
+
+class Exercice1
+{
+	
+	public static void main(String args[])
+	{
+		Exercice1 p = new Exercice1( new java.io.DataInputStream(System.in));
+		try {
+			int val = p.Program();
+			System.out.println(val);
+		} catch (Exception e) {
+			System.out.println("Erreur: " + '\n' + e);
+			System.exit(-1);
+		}
+	}
+}
+
+PARSER_END(Exercice1)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+TOKEN :
+{
+	<COMPARE: < LESS > | < LESSEQUAL > | < GREAT > | <GREATEQUAL > | < DIFF > | < EQUALEQUAL > > |
+	< #LESS: "<" > | 
+	< #LESSEQUAL: "<=" > | 
+	< #GREAT: ">" > | 
+	< #GREATEQUAL: ">=" > | 
+	< #DIFF: "!=" > | 
+	< #EQUALEQUAL: "==" > |
+	<TOK: ["1"-"9"] (["0"-"9"])* | "0" >
+}
+
+
+
+int Program() : 
+{
+	int total = 0;
+}
+{
+	total = CompExpr() ";" <EOF> { return total; }
+	
+}
+
+int CompExpr() : 
+{
+	Token t;
+	int total;
+}
+{
+	total = AndOrExpr() ( <COMPARE> AndOrExpr())*
+	{return total;}
+}
+
+int AndOrExpr() :
+{
+	int a;
+	int total;
+}
+{
+	a = NotExpr() { total = a;}
+	(
+		( "&&" a= NotExpr()
+		{ 
+			if((total > 0) && (a > 0))
+			{
+				total = 1;
+			} 
+			else
+			{
+				total = 0;
+			}
+		} 
+		)*
+		|
+		( "||" a= NotExpr() 
+		{ 
+			if((total > 0) || (a > 0))
+			{
+				total = 1;
+			}
+			else
+			{
+				total = 0;
+			}
+		}
+		)*
+	)
+	{ return total;}
+}
+
+int NotExpr() : 
+{
+	int a;
+	int total = 0;
+}
+{
+	//("not")* AddExpr()
+	( ("not")* a= AddExpr() 
+		{ 
+			//total = !a;
+			if(total > 0)
+			{
+				total = 0;
+			}
+			else
+			{
+				total = 1;
+			}
+		} 
+	)*
+
+	{ return total;}
+}
+
+int AddExpr() : 
+{
+	int a;
+	int total;
+}
+{
+	a = MultExpr() { total = a;}
+	(
+		( "+" a= MultExpr() { total = total + a;} )*
+		|
+		( "-" a= MultExpr() { total = total - a;} )*
+	)
+	{ return total;}
+}
+
+int MultExpr() :
+{
+	int a;
+	int total;
+}
+{
+	a = PowExpr() { total = a;}
+	(
+		( "*" a= PowExpr() { total = total * a;} )
+		|
+		( "/" a= PowExpr() { total = total / a;} )
+	)*
+	{ return total;}
+}
+
+int PowExpr() : 
+{
+	int a;
+	int total;
+}
+{
+	a = NegExpr() { total = a;}
+
+	( "^" a= NegExpr() { total = total ^ a;} )*
+
+	{ return total;}
+}
+
+int NegExpr() :
+{
+	int a;
+	int total;
+}
+{
+	("-")* a = BasicExpr() { total = -a;}
+	{ return total;}
+}
+
+int BasicExpr() :
+{
+  Token t;
+  int a;
+}
+{
+	(
+		t = <TOK> 
+		{ 
+			a = Integer.parseInt(t.image); 
+			return a;
+		}
+	)
+	| 
+	"(" CompExpr() ")"
+}

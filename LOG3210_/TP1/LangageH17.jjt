@@ -1,0 +1,203 @@
+options {
+	JAVA_UNICODE_ESCAPE=true;
+	STATIC=false;					// 1 seul parseur actif a la fois (+ rapide)
+	MULTI=true;						// type noeud = f(nom noeud)
+	VISITOR=true;					// Cree une methode accept(visiteur)
+	NODE_USES_PARSER=true;
+}
+
+//
+// PARSER DEFINITION
+//
+
+PARSER_BEGIN(LEParser)
+
+class LEParser
+{
+	public static void main(String args[])
+	{
+		System.out.println("Lecture de l'entree standard...");
+		LEParser c = new LEParser(new java.io.DataInputStream(System.in));
+		try {
+			SimpleNode n = c.Program();
+			System.out.println("Fichier analyse avec succes!");
+			n.dump(" ");
+		} catch (Exception e) {
+			System.out.println("Erreur: " + '\n' + e);
+			System.exit(-1);
+		}
+	}
+}
+
+PARSER_END(LEParser)
+
+//
+// LEXICAL ANALYSIS
+//
+
+// White space
+
+SKIP :
+{
+	< ( " " | "\t" | "\n" | "\r" )+	>
+}
+
+// Comments
+
+MORE :
+{
+  "//" : IN_SINGLE_LINE_COMMENT
+|
+  <"/**" ~["/"]> { input_stream.backup(1); } : IN_FORMAL_COMMENT
+|
+  "/*" : IN_MULTI_LINE_COMMENT
+}
+
+<IN_SINGLE_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > : DEFAULT
+}
+
+<IN_FORMAL_COMMENT>
+SPECIAL_TOKEN :
+{
+  <FORMAL_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+  <MULTI_LINE_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_SINGLE_LINE_COMMENT,IN_FORMAL_COMMENT,IN_MULTI_LINE_COMMENT>
+MORE :
+{
+  < ~[] >  // Demander ce que ~ fait.
+}
+
+
+
+
+
+// Keywords
+TOKEN :
+{
+	< CONDITION : <IF> | <WHILE> <DO> | <FOR> > | 
+	< IF: "if"> | 
+	< ELSE: "else"	> | 
+	< WHILE: "while" >  | 
+	< DO: "do" > | 
+	< FOR: "for">
+	
+}
+
+// Operators
+TOKEN :
+{
+	< SUITE: <ARTHM> <DIGIT> > |
+	< ARTHM: <PLUS> | <MINUS> | <EXP> | <MULT> | <DIV> | <MODULO> > |
+	< PLUS: "+" > |
+	< MINUS: "-" > |
+	< EQUAL: "=" > |
+	< LPAREN: "(" > |
+	< RPAREN: ")" > |
+	< SEMICOLON: ";" > |
+	< AND: "&&" > |
+	< OR: "||"> |
+	< NOT: "!"> |
+	< NOTEQUAL: "!=" > |
+	< GREATER: ">" > |
+	< SMALLER: "<" > |
+	< GTHENEQUAL: ">=" > |
+	< STHENEQUAL: "<=" > |
+	< EQUALS: "=="> |
+	< MULT: "*" > |
+	< DIV: "/" > |
+	< EXP: "^" > |
+	< DIVEGAL: "/=" > |
+	< MODULO: "%" >
+	//< NEGATE: "-" >
+}
+
+
+
+
+// Identifiers and numbers
+TOKEN :
+{
+	< IDENTIFIER: <LETTER> ( <LETTER> | <DIGIT> )* > |
+	< #LETTER: ["a"-"z","A"-"Z","_"] > |
+	< DIGIT: ["0"-"9"] > |
+	< INTEGER: ["1"-"9"] (["0"-"9"])* | "0" > |
+	// // Caution! Allows numbers such as "0000.23"
+	< REAL: (<INTEGER>)+ "." (["0"-"9"])+ (<EXPONENT>)? |
+			  (<INTEGER>)+ <EXPONENT> > |
+	< #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+	
+	 //
+}
+
+
+
+//
+// SYNTAX ANALYSIS
+//
+
+ASTProgram Program() : { }
+{
+	Block() <EOF> { return jjtThis; }
+	
+	// Block() represente un non-terminal.
+	// <EOF> represente le terminal indiquant la fin du flot de caracteres.
+}
+
+void Block() : { }
+{
+	// TODO: Un bloc est compose de 0, 1 ou plusieurs intructions.
+	(Stmt())*
+}
+
+void Stmt() : { }
+{
+	// TODO: Represente une instruction.
+	identifiant()
+	<CONDITION> identifiant()
+}
+
+void identifiant() : { }
+{
+	< IDENTIFIER > ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "ˆ=") (< IDENTIFIER > | <DIGIT> | <ARTHM>)* ";"
+}
+
+void Calcul() : 
+{
+	Token variable ;
+	int valeurCumulative ;
+	int valeurNouvelle ;  
+}
+{
+	variable = < IDENTIFIER > { valeurCumulative = Integer.parseInt(variable.image) ; }
+	
+	//( <PLUS> <IDENTIFIER> )
+	//|
+	( <MINUS> <IDENTIFIER> )
+	|
+	( <MULT> <IDENTIFIER> )
+	|
+	( <DIV> <IDENTIFIER> )
+	|
+	( <EXP> <IDENTIFIER> )
+	|
+	( <MODULO> <IDENTIFIER> )
+}
+
+//******/
+
+//******/
+
+// A COMPLETER
+// Suggestion: ecrire les regles de la grammaire
+// Rappel: Un non-terminal doit definir une fonction.
+//         Un terminal est, par exemple, : <IDENTIFIER>
