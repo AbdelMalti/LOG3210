@@ -71,11 +71,13 @@ int AndOrExpr() :
 		{ 
 			if((total > 0) && (a > 0))
 			{
-				total = 1;
+				//total = 1;
+				{return 1;}
 			} 
 			else
 			{
-				total = 0;
+				//total = 0;
+				{return 0;}
 			}
 		} 
 		)*
@@ -84,11 +86,13 @@ int AndOrExpr() :
 		{ 
 			if((total > 0) || (a > 0))
 			{
-				total = 1;
+				//total = 1;
+				{return 1;}
 			}
 			else
 			{
-				total = 0;
+				//total = 0;
+				{return 0;}			
 			}
 		}
 		)*
@@ -100,21 +104,28 @@ int NotExpr() :
 {
 	int a;
 	int total = 0;
+	int compteur = 0;
 }
 {
-	//("not")* AddExpr()
-	( ("not")* a= AddExpr() 
+
+	( ("not" {compteur++;} )* 
+	a= AddExpr() 
+	{
+	if(compteur > 0)
 		{ 
 			//total = !a;
-			if(total > 0)
+			if(compteur % 2 == 0)
 			{
-				total = 0;
+				//total = 0;
+				{return 0;}
 			}
 			else
 			{
-				total = 1;
+				//total = 1;
+				{return 1;}
 			}
-		} 
+		}
+	} 
 	)*
 
 	{ return total;}
@@ -188,5 +199,4 @@ int BasicExpr() :
 	)
 	| 
 	"(" CompExpr() ")"
-	//return a;	
 }

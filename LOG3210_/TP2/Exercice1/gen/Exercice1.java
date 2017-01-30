@@ -62,11 +62,13 @@ class Exercice1 implements Exercice1Constants {
       a = NotExpr();
                         if((total > 0) && (a > 0))
                         {
-                                total = 1;
+                                //total = 1;
+                                {{if (true) return 1;}}
                         }
                         else
                         {
-                                total = 0;
+                                //total = 0;
+                                {{if (true) return 0;}}
                         }
     }
           {if (true) return total;}
@@ -76,6 +78,7 @@ class Exercice1 implements Exercice1Constants {
   static final public int NotExpr() throws ParseException {
         int a;
         int total = 0;
+        int compteur = 0;
     label_4:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -100,17 +103,23 @@ class Exercice1 implements Exercice1Constants {
           break label_5;
         }
         jj_consume_token(16);
+                  compteur++;
       }
       a = AddExpr();
+        if(compteur > 0)
+                {
                         //total = !a;
-                        if(total > 0)
+                        if(compteur % 2 == 0)
                         {
-                                total = 0;
+                                //total = 0;
+                                {{if (true) return 0;}}
                         }
                         else
                         {
-                                total = 1;
+                                //total = 1;
+                                {{if (true) return 1;}}
                         }
+                }
     }
           {if (true) return total;}
     throw new Error("Missing return statement in function");
