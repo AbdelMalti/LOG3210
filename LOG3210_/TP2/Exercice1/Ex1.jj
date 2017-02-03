@@ -40,10 +40,7 @@ TOKEN :
 
 
 
-int Program() : 
-{
-	int total = 0;
-}
+int Program() : { int total = 0;}
 {
 	total = CompExpr() ";" <EOF> { return total; }
 	
@@ -53,150 +50,128 @@ int CompExpr() :
 {
 	Token t;
 	int total;
-}
-{
-	total = AndOrExpr() ( <COMPARE> AndOrExpr())*
-	{return total;}
-}
-
-int AndOrExpr() :
-{
 	int a;
-	int total;
-}
-{
-	a = NotExpr() { total = a;}
-	(
-		( "&&" a= NotExpr()
-		{ 
-			if((total > 0) && (a > 0))
-			{
-				//total = 1;
-				{return 1;}
-			} 
-			else
-			{
-				//total = 0;
-				{return 0;}
-			}
-		} 
-		)*
-		|
-		( "||" a= NotExpr() 
-		{ 
-			if((total > 0) || (a > 0))
-			{
-				//total = 1;
-				{return 1;}
-			}
-			else
-			{
-				//total = 0;
-				{return 0;}			
-			}
-		}
-		)*
-	)
-	{ return total;}
-}
-
-int NotExpr() : 
-{
-	int a;
-	int total = 0;
 	int compteur = 0;
 }
 {
+	a = AndOrExpr() {total = a;} ( <COMPARE> a = AndOrExpr() {++compteur;})*
+	{ 
+		if(compteur == 0)
+			return total;
+		else
+		{
+			if(total == a)
+				return 1;
+			else 
+				return 0;
+		}
+	}
+}
 
-	( ("not" {compteur++;} )* 
-	a= AddExpr() 
-	{
-	if(compteur > 0)
-		{ 
-			//total = !a;
-			if(compteur % 2 == 0)
+int AndOrExpr() : {int total; int a; int isAnd = 0;}
+{
+	a = NotExpr() {total = a;}
+
+	( ("&&" {isAnd = 1;} | "||" {isAnd = 0;} ) a = NotExpr() 
+		{
+			if(isAnd == 1)
 			{
-				//total = 0;
-				{return 1;}
+				if((total > 0) && (a > 0))
+					return 1;
+				else;
+					return 0;
 			}
 			else
 			{
-				//total = 1;
-				{return 0;}
+				if((total > 0) || (a > 0))
+					return 1;
+				else;
+					return 0;
 			}
 		}
-	} 
 	)*
-
-	{ return total;}
+	{ return total; }
 }
 
-int AddExpr() : 
+int NotExpr() : {int compteur = 0; int total;}
 {
-	int a;
-	int total;
+	("not" {++compteur;})* 
+	total = AddExpr()
+	{ return total; }
 }
+
+int AddExpr() : {int total; int a; int isAdd = 0;}
 {
-	a = MultExpr() { total = a;}
-	(
-		( "+" a= MultExpr() { total = total + a;} )*
+	a = MultExpr() { total = a; }
+	(	(
+		"+" {isAdd = 1;}
 		|
-		( "-" a= MultExpr() { total = total - a;} )*
-	)
-	{ return total;}
-}
+		"-" {isAdd = 0;}
+		) a = MultExpr()	{
+								if(isAdd == 1)
+								{
+									total = total + a;
+								}
+								else
+								{
+									total = total - a;
+								}
+							} 
 
-int MultExpr() :
-{
-	int a;
-	int total;
-}
-{
-	a = PowExpr() { total = a;}
-	(
-		( "*" a= PowExpr() { total = total * a;} )
-		|
-		( "/" a= PowExpr() { total = total / a;} )
 	)*
-	{ return total;}
+	{ return total; }
 }
 
-int PowExpr() : 
+int MultExpr() : {int total; int a; int isMult = 0;}
 {
-	int a;
-	int total;
-}
-{
-	a = NegExpr() { total = a;}
-
-	( "^" a= NegExpr() { total = total ^ a;} )*
-
-	{ return total;}
-}
-
-int NegExpr() :
-{
-	int a;
-	int total;
-}
-{
-	("-")* a = BasicExpr() { total = -a;}
-	{ return total;}
+	a = PowExpr() { total = a; }
+	( 	(
+		"*" {isMult = 1;}
+		| 
+		"/" {isMult = 0;}
+		) a = PowExpr() {
+							if(isMult == 1)
+							{
+								total = total * a;
+							}
+							else
+							{
+								total = total / a;
+							}
+						}
+	)*
+	{ return total; }
 }
 
-int BasicExpr() :
+int PowExpr() : {int total=0; int a;}
 {
-  Token t;
-  int a;
+	a = NegExpr() { total = a; }
+
+	( "^" a = NegExpr() { total = total ^ a;} )*
+	{ return total; }
 }
+
+int NegExpr() : {int compteur = 0;}
 {
-	(
-		t = <TOK> 
-		{ 
-			a = Integer.parseInt(t.image); 
-			return a;
-		}
-	)
-	| 
-	"(" CompExpr() ")"
+	("-"{++compteur;})* 
+	{
+		if(compteur%2 != 0)
+			return -BasicExpr();
+		else
+			return BasicExpr();
+	}
+	
 }
+
+int BasicExpr() : {int a; Token t;}
+{
+	t = <TOK> 
+	{ 
+	    a = Integer.parseInt(t.image); 
+	    return a;
+  	}
+  | 
+	"(" a = CompExpr() ")" {return a;}
+}
+
+
