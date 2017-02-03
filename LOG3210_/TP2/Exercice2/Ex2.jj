@@ -2,14 +2,47 @@ PARSER_BEGIN(Exercice2)
 
 class Exercice2
 {
+	static String[] variables = new String[20];
+	static int[] isUsed = new int[20];
+	static int compteur = 0;
+
+	static String[] variablesNoneUsed = new String[20];
+	static int compteNoneUsed = 0;
+
 	public static void main(String args[])
 	{
 		System.out.println("Lecture de l'entree standard...");
 		Exercice2 c = new Exercice2(new java.io.DataInputStream(System.in));
 		try {
+
 			String rapport = c.Program();
 			System.out.println("Fichier analyse avec succes!");
 			System.out.println(rapport);
+
+			//************** Code pour les variables non declarer   ***************//
+
+			System.out.print("Variables non declarees : ");
+			for(int j=0; j < compteNoneUsed ; j++)
+			{
+				System.out.print(variablesNoneUsed[j]+ " ");
+			}
+			System.out.println();
+
+			// ******************************************************************* //
+
+			//************** Code pour les variables non utilisees. ***************//
+
+			System.out.print("Variables non utilisees : ");
+
+			for (int i = 0; i < compteur ; ++i)
+			{
+				if(isUsed[i] == 0)
+					System.out.print(variables[i]+"  ");
+			}
+
+			System.out.println();
+			//*********************************************************************//
+
 		} catch (Exception e) {
 			System.out.println("Erreur: " + '\n' + e);
 			System.exit(-1);
@@ -148,15 +181,13 @@ TOKEN :
 
 String Program() : { }
 {
+	(DeclareStmt() ";" )*
 	Block() <EOF> { return ""; }
-	
-	// Block() represente un non-terminal.
-	// <EOF> represente le terminal indiquant la fin du flot de caracteres.
 }
 
 void Block() : { }
 {
-	(DeclareStmt() ";" )* ( Stmt() )*
+	 ( Stmt() )*
 }
 
 void Stmt() : { }
@@ -177,15 +208,55 @@ void IOStmt() : {}
 }
 
 
-void DeclareStmt() : {}
+void DeclareStmt() : {Token t; String s = "";}
 {
-	<TYPE> <IDENTIFIER> [<ASSIGN> (LOOKAHEAD(2) AssignStmt() | CompExpr() ) ] 
+	<TYPE> t = <IDENTIFIER> [<ASSIGN> (LOOKAHEAD(2) AssignStmt() | CompExpr() ) ] 
+	{
+		s = (t.image).toString();
+		variables[compteur++] = s;
+	}
 }
 
-
-void AssignStmt() : {}
+int estDeclarer(Token t) :{String s;}
 {
-	(LOOKAHEAD(2) <IDENTIFIER> <ASSIGN>)+ CompExpr()
+	{
+		s = (t.image).toString();
+		if(compteur > 0)
+		{
+			int compt = 0;
+			for (String temp : variables)
+			{
+				++compt;
+				if(temp.equals(s))
+				{
+					isUsed[compt] = 1;
+					return 1;
+				}else{ isUsed[compt] = 0; }
+			}
+		}
+		return 0;
+	}
+}
+
+void AssignStmt() : {Token t; int i;}
+{
+	(LOOKAHEAD(2) t = <IDENTIFIER> <ASSIGN>)+ CompExpr()
+	{
+		i = estDeclarer(t);
+		String s = (t.image).toString();
+		
+		if( i == 0)
+		{
+			int isAlreadyInList = 0;
+			for(int z=0; z < compteNoneUsed; z++)
+			{
+				if(variablesNoneUsed[z].equals(s))
+					isAlreadyInList = 1;
+			}
+			if(isAlreadyInList == 0)
+				variablesNoneUsed[compteNoneUsed++] = s;
+		}
+	}
 }
 
 void CompExpr() : {}
