@@ -171,10 +171,6 @@ TOKEN :
 
 
 
-
-
-
-
 //
 // SYNTAX ANALYSIS
 //
@@ -223,15 +219,16 @@ int estDeclarer(Token t) :{String s;}
 		s = (t.image).toString();
 		if(compteur > 0)
 		{
+		
 			int compt = 0;
 			for (String temp : variables)
 			{
 				++compt;
 				if(temp.equals(s))
 				{
-					isUsed[compt] = 1;
+					isUsed[compt-1] = 1;
 					return 1;
-				}else{ isUsed[compt] = 0; }
+				}
 			}
 		}
 		return 0;
@@ -294,13 +291,25 @@ void NegExpr() : {}
 	("-")* BasicExpr() 
 }
 
-void BasicExpr() : {}
+void BasicExpr() : {Token t; int i; String s;}
 {
 	LOOKAHEAD(2) FctStmt() |
-	<IDENTIFIER>|
-	<INTEGER> | 
-	<REAL> | 
-	"(" CompExpr() ")"
+	(
+		t = <IDENTIFIER> |
+		t = <INTEGER> | 
+		t = <REAL> 
+		{
+				s = (t.image).toString();
+
+				for(String temp : variables)
+				{
+					if(temp.equals(s))
+						i = estDeclarer(t);
+				}
+				
+		} 
+	) | 
+	"(" CompExpr() ")" 
 }
 
 void WhileStmt() : {}
